@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+// @ts-ignore: missing types for pdfjs legacy build
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
 import { generateNotesQuick } from '../services/quickNotesService';
 import { generateRAGResponse } from '../services/ragServices';
