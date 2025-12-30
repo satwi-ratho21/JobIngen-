@@ -1,0 +1,10 @@
+staticSites:
+  - name: ConnectED
+    repo: https://github.com/satwi-ratho21/ConnectED.git
+    branch: feature/ews-tech-accel-projects-ui
+    root: GVP/GVP
+    buildCommand: npm ci && npm run build
+    publishPath: dist
+    env:
+      - key: NODE_ENV
+        value: production
