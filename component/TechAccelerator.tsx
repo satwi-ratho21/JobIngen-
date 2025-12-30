@@ -64,7 +64,7 @@ const ROLES = [
     'QA Automation Engineer'
 ];
 
-const TechAccelerator: React.FC<TechAcceleratorProps> = ({ onNavigate }) => {
+const TechAccelerator: React.FC<TechAcceleratorProps> = ({ onNavigate, onNavigateWithProfile }) => {
     const [selectedCompany, setSelectedCompany] = useState(COMPANIES[0].name);
     const [customCompanyName, setCustomCompanyName] = useState('');
     const [role, setRole] = useState('Software Development Engineer (SDE I)');
