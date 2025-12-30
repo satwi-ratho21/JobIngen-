@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
-import { generateNotes } from '../services/geminiServices';
+import { generateNotesQuick } from '../services/quickNotesService';
+import { generateRAGResponse } from '../services/ragServices';
 import { Upload, FileText, X, Download, Loader2, File, Eye, Camera } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 // WebcamFaceRecognition and PDFViewer removed per new requirements
@@ -12,7 +13,9 @@ const Notes: React.FC = () => {
   const [pastedText, setPastedText] = useState('');
   const [generatedNotes, setGeneratedNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState<string>('');
   const [showCameraView, setShowCameraView] = useState(false);
+  const [useRAG, setUseRAG] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,22 +57,30 @@ const Notes: React.FC = () => {
     }
 
     setLoading(true);
+    setProgress('Initializing...');
     setGeneratedNotes('');
 
     try {
       let notes: string;
+      let extractedText = '';
 
       if (fileBase64) {
-        // Extract text from PDF using pdfjs and send the extracted text to LLM
+        // Extract text from PDF using pdfjs
         try {
+          setProgress('Extracting text from PDF...');
           // set worker from CDN to avoid bundler issues
           (pdfjsLib as any).GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
           const uint8 = base64ToUint8Array(fileBase64);
           const loadingTask: any = pdfjsLib.getDocument({ data: uint8 });
           const pdf = await loadingTask.promise;
+          
+          // Limit to first 10 pages for speed
+          const maxPages = Math.min(10, pdf.numPages);
           let fullText = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
+          
+          for (let i = 1; i <= maxPages; i++) {
+            setProgress(`Extracting page ${i} of ${maxPages}...`);
             // eslint-disable-next-line no-await-in-loop
             const page = await pdf.getPage(i);
             // eslint-disable-next-line no-await-in-loop
@@ -77,26 +88,73 @@ const Notes: React.FC = () => {
             const strings = content.items.map((item: any) => item.str || '').join(' ');
             fullText += `\n\n--- Page ${i} ---\n` + strings;
           }
-
-          // If extracted text is too short, still pass it and instruct LLM to elaborate strictly from this content
-          notes = await generateNotes({ content: fullText, mimeType: undefined });
+          
+          if (maxPages < pdf.numPages) {
+            fullText += `\n\n[... Document continues for ${pdf.numPages - maxPages} more pages]`;
+          }
+          
+          extractedText = fullText;
+          
+          // If text extraction successful, use it. Otherwise fall back to base64
+          if (fullText.trim().length > 50) {
+            setProgress('Generating comprehensive 30-page notes (60-120 seconds)...');
+            notes = await generateNotesQuick({ content: fullText, mimeType: undefined });
+            
+            // Enhance with RAG if enabled (done asynchronously)
+            if (useRAG) {
+              setProgress('Enhancing with knowledge base...');
+              try {
+                const ragResult = await generateRAGResponse({ 
+                  question: `Summarize and create detailed study notes for: ${fullText.substring(0, 300)}` 
+                });
+                if (ragResult.answer) {
+                  notes = `${notes}\n\n---\n\n**Knowledge Base Enhancement:**\n${ragResult.answer}`;
+                }
+              } catch (ragErr) {
+                console.log('RAG enhancement skipped:', ragErr);
+                // Continue without RAG enhancement
+              }
+            }
+          } else {
+            throw new Error('Extracted text too short');
+          }
         } catch (pdfErr) {
-          console.error('PDF text extraction failed, falling back to sending raw base64 to LLM', pdfErr);
-          // Fall back to previous behavior if extraction fails
-          notes = await generateNotes({ content: fileBase64, mimeType: 'application/pdf' });
+          console.error('PDF text extraction or generation failed:', pdfErr);
+          setProgress('Generating notes from PDF...');
+          // Fall back to sending raw base64 to LLM
+          notes = await generateNotesQuick({ content: fileBase64, mimeType: 'application/pdf' });
         }
       } else {
-        // Analyze pasted text
-        notes = await generateNotes({
+        // Analyze pasted text - Faster since no PDF extraction needed
+        setProgress('Generating comprehensive 30-page notes (60-120 seconds)...');
+        notes = await generateNotesQuick({
           content: pastedText,
           mimeType: undefined
         });
+        
+        // Enhance with RAG if enabled
+        if (useRAG) {
+          setProgress('Enhancing with knowledge base...');
+          try {
+            const ragResult = await generateRAGResponse({ 
+              question: `Create detailed study notes for: ${pastedText.substring(0, 300)}` 
+            });
+            if (ragResult.answer) {
+              notes = `${notes}\n\n---\n\n**Knowledge Base Enhancement:**\n${ragResult.answer}`;
+            }
+          } catch (ragErr) {
+            console.log('RAG enhancement skipped:', ragErr);
+          }
+        }
       }
 
+      setProgress('');
       setGeneratedNotes(notes);
     } catch (error) {
       console.error('Error generating notes:', error);
-      alert('Failed to generate notes. Please try again.');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to generate notes: ${errorMsg}. Make sure your API key is configured in .env file.`);
+      setProgress('');
     } finally {
         setLoading(false);
     }
@@ -370,6 +428,21 @@ const Notes: React.FC = () => {
               />
             </div>
 
+            {/* RAG Enhancement Toggle */}
+            <div className="flex items-center gap-3 bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
+              <input 
+                type="checkbox" 
+                id="rag-toggle"
+                checked={useRAG}
+                onChange={(e) => setUseRAG(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded"
+              />
+              <label htmlFor="rag-toggle" className="text-sm text-slate-700 cursor-pointer">
+                <span className="font-semibold">Enhance with Knowledge Base</span>
+                <span className="text-xs text-slate-500 block">Adds extra processing time but improves quality</span>
+              </label>
+            </div>
+
             {/* Generate Button */}
                       <button 
               onClick={handleGenerateNotes}
@@ -379,7 +452,10 @@ const Notes: React.FC = () => {
               {loading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  Generating Notes...
+                  <div className="text-left">
+                    <div>Generating Notes...</div>
+                    <div className="text-xs opacity-80">{progress}</div>
+                  </div>
                 </>
               ) : (
                 <>

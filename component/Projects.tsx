@@ -14,6 +14,7 @@ const Projects: React.FC = () => {
   const [interests, setInterests] = useState('');
   const [loading, setLoading] = useState(false);
   const [ideas, setIdeas] = useState<ProjectIdea[]>([]);
+  const [numIdeas, setNumIdeas] = useState<number>(6);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +32,7 @@ const Projects: React.FC = () => {
     if (!interests) return;
     setLoading(true);
     try {
-      const data = await generateProjectIdeas(interests, domain);
+      const data = await generateProjectIdeas(interests, domain, numIdeas);
       setIdeas(data);
     } catch (e) {
       alert("Failed to generate ideas.");
@@ -109,22 +110,34 @@ const Projects: React.FC = () => {
                 </div>
             )}
           </div>
-          <button 
-            onClick={handleGenerate}
-            disabled={loading || !interests}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3.5 px-8 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin h-5 w-5" />
-                Generating...
-              </>
-            ) : (
-              <>
-                Generate Ideas <Lightbulb className="h-5 w-5" />
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <select
+              value={numIdeas}
+              onChange={(e) => setNumIdeas(parseInt(e.target.value))}
+              className="p-3 bg-white border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
+            >
+              <option value={3}>3 ideas</option>
+              <option value={6}>6 ideas</option>
+              <option value={9}>9 ideas</option>
+            </select>
+
+            <button 
+              onClick={handleGenerate}
+              disabled={loading || !interests}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  Generate {numIdeas} Ideas <Lightbulb className="h-5 w-5" />
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -140,7 +153,7 @@ const Projects: React.FC = () => {
       {loading && (
         <div className="text-center py-16">
           <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-slate-600 font-medium">Generating amazing project ideas for you...</p>
+          <p className="text-slate-600 font-medium">Generating {numIdeas} project ideas for you...</p>
         </div>
       )}
 

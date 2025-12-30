@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, View } from '../types';
+import { User, View, StudentAcademicHistory } from '../types';
 import { 
   TrendingUp, 
   TrendingDown,
@@ -13,6 +13,8 @@ import {
   MapPin,
   CheckCircle,
   AlertTriangle,
+  Shield,
+  Zap,
   Linkedin,
   Instagram,
   Twitter,
@@ -25,10 +27,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 interface DashboardProps {
   onNavigate: (view: View) => void;
+  onNavigateWithProfile?: (profile: StudentAcademicHistory) => void;
   user: User;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onNavigateWithProfile, user }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -40,27 +43,27 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
 
   // Sample data for charts
   const engagementData = [
-    { day: 'Mon', engagement: 75, average: 70 },
-    { day: 'Tue', engagement: 82, average: 75 },
-    { day: 'Wed', engagement: 68, average: 72 },
-    { day: 'Thu', engagement: 90, average: 80 },
-    { day: 'Fri', engagement: 85, average: 78 }
+    { day: 'Mon', engagement: 0, average: 0 },
+    { day: 'Tue', engagement: 0, average: 0 },
+    { day: 'Wed', engagement: 0, average: 0 },
+    { day: 'Thu', engagement: 0, average: 0 },
+    { day: 'Fri', engagement: 0, average: 0 }
   ];
 
   const riskData = [
-    { subject: 'Attendance', A: 85, fullMark: 100 },
-    { subject: 'Grades', A: 78, fullMark: 100 },
-    { subject: 'Engagement', A: 82, fullMark: 100 },
-    { subject: 'Assignments', A: 88, fullMark: 100 },
-    { subject: 'Lab Work', A: 92, fullMark: 100 }
+    { subject: 'Attendance', A: 0, fullMark: 100 },
+    { subject: 'Grades', A: 0, fullMark: 100 },
+    { subject: 'Engagement', A: 0, fullMark: 100 },
+    { subject: 'Assignments', A: 0, fullMark: 100 },
+    { subject: 'Lab Work', A: 0, fullMark: 100 }
   ];
 
   const peerComparisonData = [
-    { month: 'Jan', score: 65 },
-    { month: 'Feb', score: 70 },
-    { month: 'Mar', score: 75 },
-    { month: 'Apr', score: 80 },
-    { month: 'May', score: 85 }
+    { month: 'Jan', score: 0 },
+    { month: 'Feb', score: 0 },
+    { month: 'Mar', score: 0 },
+    { month: 'Apr', score: 0 },
+    { month: 'May', score: 0 }
   ];
 
   const formatTime = (date: Date) => {
@@ -87,12 +90,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 rainbow-card">
         <div className="card-inner">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-800">Welcome back, {user.name}!</h1>
-              <p className="text-slate-600 mt-2">
-                Here's your personalized dashboard for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.
-              </p>
+            <div className="flex items-center gap-4">
+              {/* Avatar + circular readiness */}
+              <div className="relative w-20 h-20">
+                <svg className="w-20 h-20" viewBox="0 0 160 160">
+                  <circle cx="80" cy="80" r="70" stroke="#eef2ff" strokeWidth="16" fill="transparent" />
+                  <circle cx="80" cy="80" r="70" stroke="#6366f1" strokeWidth="16" fill="transparent" strokeDasharray="439.82" strokeDashoffset={439.82 - (439.82 * 0) / 100} className="transition-all duration-700 ease-out" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg">
+                    {user.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-800">Welcome back, {user.name}!</h1>
+                <p className="text-slate-600 mt-1">
+                  Your personalized dashboard for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.
+                </p>
+                <div className="mt-3 text-sm text-slate-500">Overall Readiness: <span className="font-semibold">0%</span></div>
+              </div>
             </div>
+
             <div className="text-right">
               <div className="text-2xl font-bold text-slate-800">{formatTime(currentTime)}</div>
               <div className="text-sm text-slate-600 mt-1">{formatDateOnly(currentTime)}</div>
@@ -101,37 +121,92 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         </div>
       </div>
 
+      {/* Quick summary strip */}
+      <div className="flex gap-3 overflow-x-auto py-2 mobile-scrollbar">
+        <div className="min-w-[180px] bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <div className="text-xs text-slate-500">Attendance</div>
+            <div className="text-2xl font-bold">0%</div>
+            <div className="text-xs text-slate-400">Monthly average</div>
+          </div>
+          <Users className="h-6 w-6 text-blue-500" />
+        </div>
+
+        <div className="min-w-[180px] bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <div className="text-xs text-slate-500">Attention</div>
+            <div className="text-2xl font-bold">0%</div>
+            <div className="text-xs text-slate-400">Session focus</div>
+          </div>
+          <Activity className="h-6 w-6 text-green-500" />
+        </div>
+
+        <div className="min-w-[180px] bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <div className="text-xs text-slate-500">Placement Score</div>
+            <div className="text-2xl font-bold">0%</div>
+            <div className="text-xs text-slate-400">Industry-fit</div>
+          </div>
+          <Award className="h-6 w-6 text-purple-500" />
+        </div>
+
+        <div className="min-w-[180px] bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <div className="text-xs text-slate-500">Pending Labs</div>
+            <div className="text-2xl font-bold">0</div>
+            <div className="text-xs text-slate-400">Due items</div>
+          </div>
+          <BookOpen className="h-6 w-6 text-orange-500" />
+        </div>
+      </div>
+
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <button onClick={() => onNavigate('projects')} className="flex items-center gap-3 p-3 rounded-lg text-white bg-gradient-to-r from-rose-400 to-fuchsia-500 shadow-md">
-          <div className="p-2 bg-white/20 rounded-md"><BookOpen className="h-5 w-5 text-white" /></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <button onClick={() => onNavigate('projects')} className="flex items-center gap-3 p-4 rounded-lg text-white bg-gradient-to-r from-rose-400 to-fuchsia-500 shadow-md hover:scale-105 transform transition">
+          <div className="p-3 bg-white/20 rounded-md"><BookOpen className="h-5 w-5 text-white" /></div>
           <div className="text-left">
             <div className="text-sm font-semibold">Projects</div>
             <div className="text-xs opacity-80">Generate ideas</div>
           </div>
         </button>
 
-        <button onClick={() => onNavigate('notes')} className="flex items-center gap-3 p-3 rounded-lg text-white bg-gradient-to-r from-amber-400 to-orange-500 shadow-md">
-          <div className="p-2 bg-white/20 rounded-md"><FileText className="h-5 w-5 text-white" /></div>
+        <button onClick={() => onNavigate('notes')} className="flex items-center gap-3 p-4 rounded-lg text-white bg-gradient-to-r from-amber-400 to-orange-500 shadow-md hover:scale-105 transform transition">
+          <div className="p-3 bg-white/20 rounded-md"><FileText className="h-5 w-5 text-white" /></div>
           <div className="text-left">
             <div className="text-sm font-semibold">Notes</div>
             <div className="text-xs opacity-80">Convert & summarize</div>
           </div>
         </button>
 
-        <button onClick={() => onNavigate('interview')} className="flex items-center gap-3 p-3 rounded-lg text-white bg-gradient-to-r from-emerald-400 to-teal-500 shadow-md">
-          <div className="p-2 bg-white/20 rounded-md"><Briefcase className="h-5 w-5 text-white" /></div>
+        <button onClick={() => onNavigate('interview')} className="flex items-center gap-3 p-4 rounded-lg text-white bg-gradient-to-r from-emerald-400 to-teal-500 shadow-md hover:scale-105 transform transition">
+          <div className="p-3 bg-white/20 rounded-md"><Briefcase className="h-5 w-5 text-white" /></div>
           <div className="text-left">
             <div className="text-sm font-semibold">Mock Interview</div>
             <div className="text-xs opacity-80">Practice sessions</div>
           </div>
         </button>
 
-        <button onClick={() => onNavigate('lab')} className="flex items-center gap-3 p-3 rounded-lg text-white bg-gradient-to-r from-sky-400 to-indigo-500 shadow-md">
-          <div className="p-2 bg-white/20 rounded-md"><Beaker className="h-5 w-5 text-white" /></div>
+        <button onClick={() => onNavigate('lab')} className="flex items-center gap-3 p-4 rounded-lg text-white bg-gradient-to-r from-sky-400 to-indigo-500 shadow-md hover:scale-105 transform transition">
+          <div className="p-3 bg-white/20 rounded-md"><Beaker className="h-5 w-5 text-white" /></div>
           <div className="text-left">
             <div className="text-sm font-semibold">Industry Lab</div>
             <div className="text-xs opacity-80">Guides & workflows</div>
+          </div>
+        </button>
+
+        <button onClick={() => onNavigate('mentor')} className="flex items-center gap-3 p-4 rounded-lg text-white bg-gradient-to-r from-indigo-500 to-violet-600 shadow-md hover:scale-105 transform transition">
+          <div className="p-3 bg-white/20 rounded-md"><Users className="h-5 w-5 text-white" /></div>
+          <div className="text-left">
+            <div className="text-sm font-semibold">Mentor</div>
+            <div className="text-xs opacity-80">Get guidance</div>
+          </div>
+        </button>
+
+        <button onClick={() => onNavigate('peers')} className="flex items-center gap-3 p-4 rounded-lg text-white bg-gradient-to-r from-teal-400 to-cyan-500 shadow-md hover:scale-105 transform transition">
+          <div className="p-3 bg-white/20 rounded-md"><Users className="h-5 w-5 text-white" /></div>
+          <div className="text-left">
+            <div className="text-sm font-semibold">Peer Match</div>
+            <div className="text-xs opacity-80">Find study partners</div>
           </div>
         </button>
       </div>
@@ -155,6 +230,50 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         </div>
       </div>
 
+      {/* Early Warning Notice Card - Large Hero */}
+      <div className="mt-4">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => { const prefill: StudentAcademicHistory = { previousPercentage: 0, activeBacklogs: 0, performanceNotes: 'Previous semester: 0% — slight dip due to missed submissions', snapchatId: '@student123', instagramId: '', whatsappNumber: '', uploadedMemoName: 'marks_semester3.pdf' }; if (onNavigateWithProfile) { onNavigateWithProfile(prefill); } else { onNavigate('early-warning'); } }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { const prefill: StudentAcademicHistory = { previousPercentage: 0, activeBacklogs: 0, performanceNotes: 'Previous semester: 0% — slight dip due to missed submissions', snapchatId: '@student123', instagramId: '', whatsappNumber: '', uploadedMemoName: 'marks_semester3.pdf' }; if (onNavigateWithProfile) { onNavigateWithProfile(prefill); } else { onNavigate('early-warning'); } } }}
+          className="w-full rounded-xl p-8 shadow-lg relative overflow-hidden cursor-pointer bg-gradient-to-r from-violet-700 via-violet-600 to-indigo-600 text-white transition-transform hover:-translate-y-1"
+          aria-label="Open Early Warning Notice"
+        >
+          <div className="absolute left-6 top-6 bg-white/6 rounded-full p-3 backdrop-blur-sm">
+            <Shield className="h-6 w-6 text-white/90" />
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3">
+                <h3 className="text-2xl font-bold">Early Warning Notice!</h3>
+                <span className="bg-white/10 text-xs px-2 py-1 rounded-full font-semibold">AI WELL-BEING MONITOR</span>
+              </div>
+              <p className="mt-3 text-slate-200 max-w-3xl">Proactively identify silent mental, emotional, and social distress patterns through anonymized behavioral drift detection.</p>
+
+              <div className="mt-6 flex items-center gap-3">
+                <button onClick={() => { const prefill: StudentAcademicHistory = { previousPercentage: 0, activeBacklogs: 0, performanceNotes: 'Previous semester: 0% — slight dip due to missed submissions', snapchatId: '@student123', instagramId: '', whatsappNumber: '', uploadedMemoName: 'marks_semester3.pdf' }; if (onNavigateWithProfile) { onNavigateWithProfile(prefill); } else { onNavigate('early-warning'); } }} className="bg-white text-violet-700 px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 shadow-sm hover:opacity-95">
+                  <Zap className="h-4 w-4" />
+                  Launch Analysis
+                </button>
+                <button onClick={() => { const prefill: StudentAcademicHistory = { previousPercentage: 0, activeBacklogs: 0, performanceNotes: 'Previous semester: 0% — slight dip due to missed submissions', snapchatId: '@student123', instagramId: '', whatsappNumber: '', uploadedMemoName: 'marks_semester3.pdf' }; if (onNavigateWithProfile) { onNavigateWithProfile(prefill); } else { onNavigate('early-warning'); } }} className="text-sm text-white/90 bg-white/6 px-3 py-2 rounded-lg">View Details</button>
+              </div>
+            </div>
+
+            <div className="hidden md:block w-56 h-24 bg-white/4 rounded-lg p-3">
+              {/* Decorative/summary area - could contain sparkline or quick status */}
+              <div className="text-xs text-white/90 font-medium">Latest Signal</div>
+              <div className="mt-2 text-2xl font-bold">0%</div>
+              <div className="text-xs text-white/70">Safe Zone — stable engagement</div>
+            </div>
+          </div>
+
+          {/* Decorative bottom overlay */}
+          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+        </div>
+      </div>
+
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Attendance Card */}
@@ -165,11 +284,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-green-600">+2.1%</span>
+                <span className="text-sm font-medium text-green-600">+0.0%</span>
                 <TrendingUp className="h-5 w-5 text-green-600" />
               </div>
             </div>
-            <h3 className="text-3xl font-bold text-slate-800 mb-1">92%</h3>
+            <h3 className="text-3xl font-bold text-slate-800 mb-1">0%</h3>
             <p className="text-sm text-slate-600">Attendance</p>
           </div>
         </div>
@@ -182,11 +301,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 <Activity className="h-6 w-6 text-green-600" />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-rose-600">-1.8%</span>
+                <span className="text-sm font-medium text-rose-600">0.0%</span>
                 <TrendingDown className="h-5 w-5 text-rose-600" />
               </div>
             </div>
-            <h3 className="text-3xl font-bold text-slate-800 mb-1">85%</h3>
+            <h3 className="text-3xl font-bold text-slate-800 mb-1">0%</h3>
             <p className="text-sm text-slate-600">Attention Span</p>
           </div>
         </div>
@@ -199,11 +318,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 <Award className="h-6 w-6 text-purple-600" />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-green-600">+0.6%</span>
+                <span className="text-sm font-medium text-green-600">+0.0%</span>
                 <TrendingUp className="h-5 w-5 text-green-600" />
               </div>
             </div>
-            <h3 className="text-3xl font-bold text-slate-800 mb-1">78%</h3>
+            <h3 className="text-3xl font-bold text-slate-800 mb-1">0%</h3>
             <p className="text-sm text-slate-600">Placement Score</p>
           </div>
         </div>
@@ -216,11 +335,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 <BookOpen className="h-6 w-6 text-orange-600" />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-amber-600">+4</span>
+                <span className="text-sm font-medium text-amber-600">+0</span>
                 <AlertCircle className="h-5 w-5 text-amber-600" />
               </div>
             </div>
-            <h3 className="text-3xl font-bold text-slate-800 mb-1">2</h3>
+            <h3 className="text-3xl font-bold text-slate-800 mb-1">0</h3>
             <p className="text-sm text-slate-600">Pending Labs</p>
           </div>
         </div>
@@ -300,7 +419,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               </div>
             </div>
             <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-              <div className="bg-green-500 h-full rounded-full" style={{ width: '100%' }}></div>
+              <div className="bg-green-500 h-full rounded-full" style={{ width: '0%' }}></div>
             </div>
           </div>
 
@@ -314,7 +433,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               </div>
             </div>
             <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-              <div className="bg-yellow-500 h-full rounded-full" style={{ width: '40%' }}></div>
+              <div className="bg-yellow-500 h-full rounded-full" style={{ width: '0%' }}></div>
             </div>
           </div>
         </div>

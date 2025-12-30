@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 
 interface TechAcceleratorProps {
     onNavigate?: (view: View) => void;
+    onNavigateWithProfile?: (profile: import('../types').StudentAcademicHistory) => void;
 }
 
 // Component to render company logo
@@ -91,7 +92,32 @@ const TechAccelerator: React.FC<TechAcceleratorProps> = ({ onNavigate }) => {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setResumeFile(e.target.files[0]);
+            const f = e.target.files[0];
+            setResumeFile(f);
+            // Run a quick analysis preview immediately using the uploaded file
+            (async () => {
+                try {
+                    // read file as base64
+                    const reader = new FileReader();
+                    const filePromise = new Promise<string>((resolve, reject) => {
+                        reader.onload = () => {
+                            const result = reader.result as string;
+                            const base64Content = result.split(',')[1] || result;
+                            resolve(base64Content);
+                        };
+                        reader.onerror = () => reject(new Error('Failed to read file'));
+                    });
+                    reader.readAsDataURL(f);
+                    const base64Content = await filePromise;
+                    setLoading(true);
+                    const data = await analyzeCompanyFit({ content: base64Content, mimeType: 'application/pdf' }, selectedCompany, role, resumeText || '');
+                    if (data && data.matchScore !== undefined) setAnalysis(data);
+                } catch (err) {
+                    // ignore preview errors
+                } finally {
+                    setLoading(false);
+                }
+            })();
         }
     };
 
@@ -327,7 +353,40 @@ const TechAccelerator: React.FC<TechAcceleratorProps> = ({ onNavigate }) => {
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Additional Skills / Notes</label>
                                 <textarea 
                                     value={resumeText}
-                                    onChange={(e) => setResumeText(e.target.value)}
+                                    onChange={(e) => { setResumeText(e.target.value); setAnalysis(null); }}
+                                    onBlur={async () => {
+                                        // Re-run analysis when the user finishes typing (on blur)
+                                        if (!resumeText.trim() && !resumeFile) return;
+                                        if (loading) return;
+                                        setLoading(true);
+                                        try {
+                                            let resumeInput: { content: string; mimeType?: string } = { content: '', mimeType: 'text/plain' };
+                                            if (resumeFile) {
+                                                // Read file as base64
+                                                const reader = new FileReader();
+                                                const filePromise = new Promise<string>((resolve, reject) => {
+                                                    reader.onload = () => {
+                                                        const result = reader.result as string;
+                                                        const base64Content = result.split(',')[1] || result;
+                                                        resolve(base64Content);
+                                                    };
+                                                    reader.onerror = () => reject(new Error('Failed to read file'));
+                                                });
+                                                reader.readAsDataURL(resumeFile);
+                                                const base64Content = await filePromise;
+                                                resumeInput = { content: base64Content, mimeType: 'application/pdf' };
+                                            } else {
+                                                resumeInput = { content: resumeText.trim(), mimeType: 'text/plain' };
+                                            }
+
+                                            const data = await analyzeCompanyFit(resumeInput, selectedCompany, role, resumeText || '');
+                                            if (data && data.matchScore !== undefined) setAnalysis(data);
+                                        } catch (e) {
+                                            // ignore
+                                        } finally {
+                                            setLoading(false);
+                                        }
+                                    }}
                                     className="w-full p-3 h-24 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all resize-none text-sm"
                                     placeholder="e.g. I have built 3 projects in React. I am weak in Dynamic Programming..."
                                 />
@@ -469,7 +528,7 @@ const TechAccelerator: React.FC<TechAcceleratorProps> = ({ onNavigate }) => {
                                                                 ))}
                                                             </ul>
                                                         ) : (
-                                                            <p className="text-sm text-slate-500">{week.description || 'No specific tasks defined.'}</p>
+                                                              <p className="text-sm text-slate-500">{(week as any).description || 'No specific tasks defined.'}</p>
                                                         )}
                                                         <div className="mt-4 flex gap-2">
                                                             {idx === 0 && (
@@ -518,6 +577,30 @@ const TechAccelerator: React.FC<TechAcceleratorProps> = ({ onNavigate }) => {
                             </div>
                         </div>
                     )}
+                </div>
+            </div>
+
+            {/* Early Warning Notice small box below Tech Accelerator */}
+            <div className="mt-6 max-w-7xl mx-auto">
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                        const prefill = { previousPercentage: 78, activeBacklogs: 0, performanceNotes: 'Previous semester: 78% — slight dip due to missed submissions', snapchatId: '@student123', instagramId: '', whatsappNumber: '', uploadedMemoName: 'marks_semester3.pdf' };
+                        if (typeof onNavigateWithProfile === 'function') { onNavigateWithProfile(prefill as any); } else { onNavigate && onNavigate('early-warning'); }
+                    }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { const prefill = { previousPercentage: 78, activeBacklogs: 0, performanceNotes: 'Previous semester: 78% — slight dip due to missed submissions', snapchatId: '@student123', instagramId: '', whatsappNumber: '', uploadedMemoName: 'marks_semester3.pdf' }; if (typeof onNavigateWithProfile === 'function') { onNavigateWithProfile(prefill as any); } else { onNavigate && onNavigate('early-warning'); } } }}
+                    className="w-full bg-white p-4 rounded-lg border border-yellow-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex items-center gap-4"
+                    aria-label="Open Early Warning Notice"
+                >
+                    <div className="p-3 rounded-md bg-yellow-50 text-yellow-600">
+                        <AlertTriangle className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-slate-800">early warning notice !</h4>
+                        <p className="text-xs text-slate-500">Proactively identify students showing silent distress. Click to open Early Warning System (consent-required, privacy-preserving).</p>
+                    </div>
+                    <div className="ml-auto text-xs text-slate-400">Click to open →</div>
                 </div>
             </div>
         </div>

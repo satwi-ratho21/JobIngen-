@@ -1,5 +1,5 @@
 
-export type View = 'dashboard' | 'tech-accelerator' | 'skill-gap' | 'mentor' | 'projects' | 'interview' | 'trends' | 'timetable' | 'lab' | 'peers' | 'notes' | 'parents' | 'scholar';
+export type View = 'dashboard' | 'tech-accelerator' | 'early-warning' | 'skill-gap' | 'mentor' | 'projects' | 'interview' | 'trends' | 'timetable' | 'lab' | 'peers' | 'notes' | 'parents' | 'scholar';
 
 export interface User {
   name: string;
@@ -80,3 +80,58 @@ export interface QuizQuestion {
   options: string[];
   correctIndex: number;
 }
+
+// Early Warning System types
+export type RiskLevel = 'low' | 'medium' | 'high';
+
+export interface StudentRisk {
+  id: string; // anonymized id
+  riskLevel: RiskLevel;
+  score: number; // composite risk score 0-100
+  anonymizedSignals: {
+    engagementDrop?: boolean;
+    missedAssignments?: number;
+    sentiment?: string;
+    collaborationChange?: boolean;
+    pressureIndex?: number;
+  };
+  explainability: string; // human-friendly explanation for why risk flagged
+}
+
+export interface EarlyWarningSummary {
+  totalStudentsMonitored: number;
+  atRiskCounts: {
+    low: number;
+    medium: number;
+    high: number;
+  };
+  lastRun: string; // ISO timestamp
+}
+
+export interface EarlyWarningConfig {
+  enabled: boolean;
+  consentGiven: boolean;
+  notificationThresholds: {
+    studentNotify: number; // score threshold to notify student first
+    escalateToMentor: number; // score threshold to notify mentor/counselor
+  };
+}
+
+// Academic history supplied by students to improve the personalized analysis.
+export interface StudentAcademicHistory {
+  // Primary numeric representation used for analysis (0-100 percentage). If user enters GPA, convert to percentage before sending.
+  previousPercentage?: number;
+  // Optional GPA value (e.g., 8.5) for record-keeping
+  gpa?: number;
+  // Number of active backlogs (failed courses) if any
+  activeBacklogs?: number;
+  // Free-text context for performance notes (optional, used locally/anonymously)
+  performanceNotes?: string;
+  // Placeholder for uploaded memo/file reference (not uploaded in this mock)
+  uploadedMemoName?: string;
+
+  // Social & messaging identifiers (optional). In production these should be tokenized/anonymized and processed under explicit consent.
+  snapchatId?: string;
+  instagramId?: string;
+  whatsappNumber?: string;
+} 

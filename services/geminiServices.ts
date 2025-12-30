@@ -1,7 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const apiKey = import.meta.env.VITE_API_KEY || '';
+const apiKey = (import.meta as any).env?.VITE_API_KEY || '';
 
 if (!apiKey) {
   console.warn('VITE_API_KEY is not set. AI features will not work. Please add your Google Gemini API key to .env file.');
@@ -196,6 +196,79 @@ const getMockAnalysis = (company: string, role: string): any => {
   };
 };
 
+// Fast local analyzer fallback (client-side heuristic)
+const fastLocalAnalyzeCompanyFit = (resumeInput: { content: string; mimeType?: string }, company: string, role: string, additionalSkills: string = ''): any => {
+  // Extract plain text tokens from input (try base64 decode for PDFs)
+  let text = '';
+  try {
+    if (resumeInput.mimeType === 'application/pdf') {
+      // Attempt to decode base64 and extract visible tokens (may be limited)
+      let decoded = '';
+      try {
+        decoded = atob((resumeInput.content || '').replace(/\s/g, ''));
+      } catch (e) {
+        decoded = '';
+      }
+      text = decoded || '';
+    } else {
+      text = resumeInput.content || '';
+    }
+  } catch (e) {
+    text = resumeInput.content || '';
+  }
+
+  const lower = (text + ' ' + additionalSkills).toLowerCase();
+
+  const ROLE_SKILLS: Record<string, string[]> = {
+    frontend: ['react', 'javascript', 'typescript', 'html', 'css', 'redux', 'zustand', 'webpack', 'performance', 'accessibility'],
+    backend: ['java', 'spring', 'node', 'express', 'microservices', 'docker', 'kubernetes', 'sql', 'rest', 'postgresql'],
+    fullstack: ['react', 'node', 'sql', 'docker', 'typescript', 'rest', 'graphql'],
+    data: ['python', 'pandas', 'numpy', 'sql', 'bigquery', 'spark', 'tensorflow', 'pytorch'],
+    ml: ['machine learning', 'tensorflow', 'pytorch', 'scikit', 'statistics', 'deep learning', 'nlp'],
+    devops: ['docker', 'kubernetes', 'aws', 'terraform', 'ci/cd', 'ansible'],
+    default: ['cloud', 'sql', 'docker', 'git', 'rest']
+  };
+
+  const roleKey = Object.keys(ROLE_SKILLS).find(k => role.toLowerCase().includes(k)) || 'default';
+  const required = ROLE_SKILLS[roleKey] || ROLE_SKILLS.default;
+
+  // Match skills by substring
+  const matched: string[] = [];
+  required.forEach(skill => {
+    if (lower.includes(skill)) matched.push(skill);
+  });
+
+  // Also look for known synonyms (simple)
+  if (!matched.includes('sql') && lower.includes('mysql')) matched.push('sql');
+  if (!matched.includes('sql') && lower.includes('postgres')) matched.push('sql');
+
+  const matchRatio = matched.length / Math.max(1, required.length);
+  // Base score of 40, skill coverage contributes 60
+  let matchScore = Math.round(40 + matchRatio * 60);
+  // Boost if resume explicitly mentions target company or role
+  if (lower.includes(company.toLowerCase())) matchScore = Math.min(100, matchScore + 5);
+  if (lower.includes(role.toLowerCase())) matchScore = Math.min(100, matchScore + 3);
+
+  const missingSkills = required.filter(r => !matched.includes(r)).map(s => ({ skill: s, platform: 'Coursera', courseLink: `https://www.coursera.org/search?query=${encodeURIComponent(s)}` }));
+
+  const culturalFit = `Quick heuristic analysis based on provided resume text and skills. Matched ${matched.length} of ${required.length} role-specific skills.`;
+
+  // Build a simple 4-week plan distributing missing skills
+  const weeks = [[], [], [], []] as string[][];
+  missingSkills.forEach((ms, idx) => {
+    weeks[idx % 4].push(ms.skill);
+  });
+
+  const accelerationPlan = weeks.map((w, i) => ({ week: `WEEK ${i+1}`, focus: w.length ? w.join(', ') : 'Project and refinement', tasks: w.length ? w.map(s => `Study ${s} and build a small sample project`) : ['Consolidate learnings and build a capstone project'] }));
+
+  return {
+    matchScore,
+    culturalFit,
+    technicalGaps: missingSkills.map(m => m.skill),
+    accelerationPlan
+  };
+};
+
 export const analyzeCompanyFit = async (
     resumeInput: { content: string, mimeType?: string }, 
     company: string, 
@@ -204,9 +277,9 @@ export const analyzeCompanyFit = async (
 ): Promise<any> => {
   try {
     if (!ai || !apiKey || apiKey === 'your_api_key_here') {
-      console.warn('API key not configured. Using mock data for demonstration.');
-      // Return mock data immediately
-      return getMockAnalysis(company, role);
+      console.warn('API key not configured. Using fast local heuristic analysis for Skill Gap/Company Fit.');
+      // Use a fast local heuristic to provide meaningful matchScore and missing skills
+      return fastLocalAnalyzeCompanyFit(resumeInput, company, role, additionalSkills);
     }
 
     const systemPrompt = `
@@ -274,12 +347,13 @@ export const analyzeCompanyFit = async (
     return result;
   } catch (error: any) {
     console.error("Company Fit Error", error);
-    // If API key is invalid or error occurs, return mock data instead of throwing
-    if (error.message?.includes('API key') || error.message?.includes('INVALID_ARGUMENT')) {
-      console.warn('API key issue detected. Using mock data for demonstration.');
+    // If API key is invalid or error occurs, fallback to local heuristic
+    try {
+      return fastLocalAnalyzeCompanyFit(resumeInput, company, role, additionalSkills);
+    } catch (e) {
+      console.warn('Using mock data as last resort.');
       return getMockAnalysis(company, role);
     }
-    throw new Error(error.message || 'Failed to analyze company fit. Using demo data.');
   }
 }
 
@@ -517,11 +591,11 @@ export const getTrendAnalytics = async (): Promise<any> => {
 }
 
 // 5. Project Ideas Generator
-const getMockProjectIdeas = (interests: string, domain: string): any[] => {
+const getMockProjectIdeas = (interests: string, domain: string, count: number = 6): any[] => {
   const domainLower = domain.toLowerCase();
   const interestsLower = interests.toLowerCase();
   
-  // Generate 3 project ideas based on domain and interests
+  // Generate base project ideas based on domain and interests; we'll expand to `count` items if needed
   const ideas: any[] = [];
   
   if (domainLower.includes('web') || domainLower.includes('development')) {
@@ -720,53 +794,201 @@ const getMockProjectIdeas = (interests: string, domain: string): any[] => {
       }
     );
   } else if (domainLower.includes('machine learning') || domainLower.includes('ai')) {
-    ideas.push(
-      {
-        title: 'Image Classification App for Medical Diagnosis',
-        description: 'An AI-powered application that analyzes medical images (X-rays, CT scans) to assist doctors in diagnosis with high accuracy.',
-        techStack: ['Python', 'TensorFlow/PyTorch', 'Flask/FastAPI', 'React', 'PostgreSQL', 'Docker'],
-        difficulty: 'Advanced',
-        roadmap: [
-          'Collect and preprocess medical image dataset',
-          'Train CNN model with TensorFlow',
-          'Build REST API with Flask',
-          'Create frontend with React',
-          'Implement model deployment pipeline',
-          'Add user authentication and data security',
-          'Deploy with Kubernetes'
-        ]
-      },
-      {
-        title: 'Sentiment Analysis Tool for Social Media',
-        description: 'A real-time sentiment analysis tool that monitors social media posts, reviews, and comments to gauge public opinion.',
-        techStack: ['Python', 'NLTK/Spacy', 'Flask', 'React', 'MongoDB', 'Twitter API'],
-        difficulty: 'Intermediate',
-        roadmap: [
-          'Set up NLP libraries and models',
-          'Build data collection from APIs',
-          'Implement sentiment analysis algorithm',
-          'Create visualization dashboard',
-          'Add real-time streaming',
-          'Build alert system for trends',
-          'Deploy on cloud platform'
-        ]
-      },
-      {
-        title: 'Chatbot for Customer Support',
-        description: 'An intelligent chatbot that handles customer queries, provides product information, and escalates complex issues to human agents.',
-        techStack: ['Python', 'OpenAI API', 'Flask', 'React', 'PostgreSQL', 'WebSocket'],
-        difficulty: 'Intermediate',
-        roadmap: [
-          'Design conversation flow and intents',
-          'Integrate OpenAI API or train custom model',
-          'Build backend API with Flask',
-          'Create chat interface with React',
-          'Implement context management',
-          'Add human handoff functionality',
-          'Deploy with monitoring and analytics'
-        ]
-      }
-    );
+    // Tailor ML/AI projects to the user's specific interests when possible
+    if (interestsLower.includes('health') || interestsLower.includes('healthcare') || interestsLower.includes('medical')) {
+      ideas.push(
+        {
+          title: 'Medical Image Diagnosis with Explainable AI',
+          description: 'A machine learning system that classifies medical images (X-rays, CT) and provides explainable visualizations to assist clinicians in diagnosis.',
+          techStack: ['Python', 'TensorFlow/Keras', 'FastAPI', 'React', 'PostgreSQL', 'Docker'],
+          difficulty: 'Advanced',
+          roadmap: [
+            'Collect and preprocess de-identified medical image datasets',
+            'Train and validate CNNs with augmentation and transfer learning',
+            'Add explainability (Grad-CAM / LIME) for clinician trust',
+            'Build REST API with FastAPI for model serving',
+            'Create React frontend to visualize predictions and explanations',
+            'Add user roles and data privacy controls',
+            'Deploy using Docker & Kubernetes with monitoring'
+          ]
+        },
+        {
+          title: 'Personalized Health Recommendation Engine',
+          description: 'An ML pipeline that uses user health records and wearable data to recommend personalized fitness and nutrition plans.',
+          techStack: ['Python', 'Scikit-learn/TensorFlow', 'Streamlit/React', 'PostgreSQL', 'Docker', 'AWS Lambda'],
+          difficulty: 'Intermediate',
+          roadmap: [
+            'Design data schema for health metrics',
+            'Collect sample wearable and user-provided data',
+            'Build feature engineering pipeline',
+            'Train personalized recommendation models',
+            'Create frontend for user onboarding and visualizations',
+            'Integrate privacy and consent flows',
+            'Deploy as serverless components for scalability'
+          ]
+        },
+        {
+          title: 'Clinical Notes NLP for Triage and Insights',
+          description: 'Use NLP to extract key indicators from clinical notes to prioritize cases and surface actionable insights for clinicians.',
+          techStack: ['Python', 'SpaCy/Transformers', 'FastAPI', 'React', 'ElasticSearch', 'PostgreSQL'],
+          difficulty: 'Advanced',
+          roadmap: [
+            'Collect de-identified clinical text datasets',
+            'Build NER and classification models for triage',
+            'Create search/indexing with ElasticSearch',
+            'Expose APIs for integration with hospital systems',
+            'Create UI for triage workflows and insights',
+            'Add evaluation metrics and clinician feedback loop',
+            'Deploy with secure hosting and audit logging'
+          ]
+        }
+      );
+    } else if (interestsLower.includes('finance') || interestsLower.includes('fintech')) {
+      ideas.push(
+        {
+          title: 'Fraud Detection and Anomaly Detection System for FinTech',
+          description: 'An ML system that detects fraudulent transactions in real-time and provides explainable alerts for risk teams.',
+          techStack: ['Python', 'PyTorch/Scikit-learn', 'Kafka', 'Flask', 'PostgreSQL', 'Docker'],
+          difficulty: 'Advanced',
+          roadmap: [
+            'Gather transactional datasets and label anomalies',
+            'Build feature engineering and streaming pipeline with Kafka',
+            'Train supervised and unsupervised anomaly detection models',
+            'Create real-time scoring API',
+            'Build dashboard for investigations and alerts',
+            'Implement feedback loop to retrain models',
+            'Deploy with monitoring and scaling'
+          ]
+        },
+        {
+          title: 'Credit Risk Scoring with Explainable Models',
+          description: 'Develop a credit scoring model that combines alternative data and provides explainable risk scores for lending decisions.',
+          techStack: ['Python', 'XGBoost/LightGBM', 'Flask', 'React', 'PostgreSQL', 'Docker'],
+          difficulty: 'Intermediate',
+          roadmap: [
+            'Collect and synthesize labeled credit datasets',
+            'Build robust feature set including alternative signals',
+            'Train interpretable models and validate fairness',
+            'Create API for scoring and approval pipelines',
+            'Add dashboard for risk teams and model monitoring',
+            'Integrate with sample lending workflow',
+            'Deploy with secure access controls'
+          ]
+        },
+        {
+          title: 'Algorithmic Trading Signal Generator',
+          description: 'Use ML to generate trading signals based on historical and alternative data sources, with backtesting and risk controls.',
+          techStack: ['Python', 'Pandas', 'Backtrader', 'Scikit-learn', 'FastAPI', 'PostgreSQL'],
+          difficulty: 'Advanced',
+          roadmap: [
+            'Collect and clean historical market and alternative data',
+            'Engineer technical and alternative features',
+            'Train time-series and ensemble models',
+            'Implement backtesting and performance analysis',
+            'Create signal API and execution simulator',
+            'Add risk controls and monitoring',
+            'Deploy with cron or scheduled jobs for live signals'
+          ]
+        }
+      );
+    } else if (interestsLower.includes('edtech') || interestsLower.includes('education')) {
+      ideas.push(
+        {
+          title: 'Adaptive Tutoring System with Reinforcement Learning',
+          description: 'An intelligent tutoring system that personalizes learning sequences using reinforcement learning to maximize student engagement and retention.',
+          techStack: ['Python', 'TensorFlow', 'Django/FastAPI', 'React', 'PostgreSQL', 'Docker'],
+          difficulty: 'Advanced',
+          roadmap: [
+            'Design learning objectives and reward signal',
+            'Collect interaction data and build simulators',
+            'Train RL-based policy for content sequencing',
+            'Build frontend for student interactions',
+            'Create analytics for learning outcomes',
+            'Iterate with educator feedback',
+            'Deploy and monitor model drift'
+          ]
+        },
+        {
+          title: 'Automated Grading and Feedback System using NLP',
+          description: 'Use NLP to grade short answers and provide actionable feedback, saving instructor time while maintaining quality.',
+          techStack: ['Python', 'Transformers', 'Flask', 'React', 'PostgreSQL', 'Docker'],
+          difficulty: 'Intermediate',
+          roadmap: [
+            'Collect graded short answer datasets',
+            'Train models for scoring and feedback generation',
+            'Create API for submissions',
+            'Build educator dashboard for overrides',
+            'Add calibration and fairness checks',
+            'Integrate into LMS or classroom workflows',
+            'Deploy with monitoring and retention policies'
+          ]
+        },
+        {
+          title: 'Skill Gap Analyzer with Personal Learning Paths',
+          description: 'Combine assessment and ML to detect skill gaps and generate personalized plans with curated resources and timelines.',
+          techStack: ['Python', 'Scikit-learn', 'React', 'Node.js', 'PostgreSQL', 'Docker'],
+          difficulty: 'Intermediate',
+          roadmap: [
+            'Design assessment instruments and skill taxonomy',
+            'Collect baseline assessments',
+            'Build gap analysis and recommendation engine',
+            'Create UI for personalized plans',
+            'Integrate content and tracking',
+            'Run pilot with sample users',
+            'Deploy and gather feedback'
+          ]
+        }
+      );
+    } else {
+      // Generic ML projects
+      ideas.push(
+        {
+          title: 'Image Classification App for Medical Diagnosis',
+          description: 'An AI-powered application that analyzes medical images (X-rays, CT scans) to assist doctors in diagnosis with high accuracy.',
+          techStack: ['Python', 'TensorFlow/PyTorch', 'Flask/FastAPI', 'React', 'PostgreSQL', 'Docker'],
+          difficulty: 'Advanced',
+          roadmap: [
+            'Collect and preprocess medical image dataset',
+            'Train CNN model with TensorFlow',
+            'Build REST API with Flask',
+            'Create frontend with React',
+            'Implement model deployment pipeline',
+            'Add user authentication and data security',
+            'Deploy with Kubernetes'
+          ]
+        },
+        {
+          title: 'Sentiment Analysis Tool for Social Media',
+          description: 'A real-time sentiment analysis tool that monitors social media posts, reviews, and comments to gauge public opinion.',
+          techStack: ['Python', 'NLTK/Spacy', 'Flask', 'React', 'MongoDB', 'Twitter API'],
+          difficulty: 'Intermediate',
+          roadmap: [
+            'Set up NLP libraries and models',
+            'Build data collection from APIs',
+            'Implement sentiment analysis algorithm',
+            'Create visualization dashboard',
+            'Add real-time streaming',
+            'Build alert system for trends',
+            'Deploy on cloud platform'
+          ]
+        },
+        {
+          title: 'Chatbot for Customer Support',
+          description: 'An intelligent chatbot that handles customer queries, provides product information, and escalates complex issues to human agents.',
+          techStack: ['Python', 'OpenAI API', 'Flask', 'React', 'PostgreSQL', 'WebSocket'],
+          difficulty: 'Intermediate',
+          roadmap: [
+            'Design conversation flow and intents',
+            'Integrate OpenAI API or train custom model',
+            'Build backend API with Flask',
+            'Create chat interface with React',
+            'Implement context management',
+            'Add human handoff functionality',
+            'Deploy with monitoring and analytics'
+          ]
+        }
+      );
+    }
   } else {
     // Default projects
     ideas.push(
@@ -818,28 +1040,47 @@ const getMockProjectIdeas = (interests: string, domain: string): any[] => {
     );
   }
   
+  // If we have fewer than requested, create sensible variations until we reach `count`
+  if (ideas.length < count) {
+    const expanded = [...ideas];
+    let variant = 1;
+    while (expanded.length < count) {
+      const src = ideas[expanded.length % Math.max(1, ideas.length)] || ideas[0] || {
+        title: 'Project Idea', description: 'A practical project idea', techStack: ['React','Node.js'], difficulty: 'Intermediate', roadmap: ['Plan','Build']
+      };
+      const clone = JSON.parse(JSON.stringify(src));
+      clone.title = `${src.title} — Variant ${variant++}`;
+      // Slightly tweak difficulty if possible
+      if (clone.difficulty === 'Advanced') clone.difficulty = 'Intermediate';
+      else if (clone.difficulty === 'Intermediate') clone.difficulty = 'Beginner';
+      expanded.push(clone);
+      if (expanded.length > 50) break; // safety
+    }
+    return expanded.slice(0, count);
+  }
+
   return ideas;
 };
 
-export const generateProjectIdeas = async (interests: string, domain: string): Promise<any[]> => {
+export const generateProjectIdeas = async (interests: string, domain: string, count: number = 6): Promise<any[]> => {
   try {
     // Fast fallback if API key is not available
     if (!ai || !apiKey || apiKey === 'your_api_key_here') {
       console.warn('API key not configured. Using fast mock project ideas.');
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate quick processing
-      return getMockProjectIdeas(interests, domain);
+      return getMockProjectIdeas(interests, domain, count);
     }
 
-    const prompt = `Generate 3 unique, plagiarism-free project ideas for "${domain}" domain focusing on "${interests}" interests.
+    const prompt = `Generate ${count} unique, plagiarism-free project ideas that explicitly combine the domain "${domain}" with the user's specific interests: "${interests}". Prioritize ideas that integrate the interest into the core project (e.g., "ML + Healthcare", "IoT + Agriculture"). If multiple comma-separated interests are provided, produce cross-cutting projects that use two or more interests where possible.
     
-    Return JSON array with:
+    Return JSON array with exactly ${count} items where possible, each with:
     - title: Creative, specific project name
-    - description: 2-3 sentence description explaining the project
+    - description: 2-3 sentence description explaining the project and how it combines domain + interests
     - techStack: Array of 5-7 relevant technologies/tools
     - difficulty: "Beginner", "Intermediate", or "Advanced"
     - roadmap: Array of 7 steps for implementation
     
-    Make projects practical, industry-relevant, and suitable for portfolio.`;
+    Make projects practical, industry-relevant, and suitable for a portfolio. If interests are empty or generic, produce domain-relevant ideas but prefer specialization when interests are provided.`;
 
     // Add timeout promise
     const timeoutPromise = new Promise((_, reject) => 
@@ -878,7 +1119,7 @@ export const generateProjectIdeas = async (interests: string, domain: string): P
   } catch (error) {
     console.error("Project generation error:", error);
     // Return mock data on error for fast fallback
-    return getMockProjectIdeas(interests, domain);
+    return getMockProjectIdeas(interests, domain, count);
   }
 };
 

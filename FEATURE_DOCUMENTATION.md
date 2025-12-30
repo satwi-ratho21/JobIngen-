@@ -344,6 +344,29 @@ const handleCloseWebcam = () => {
 
 ---
 
+## 🛡️ Feature: Early Warning / Well-being Integration
+
+### Summary
+EduBridge collects an **Academic History** (previous GPA/percentage, active backlogs, contextual notes, optional study memo) and **Social & Messaging Identifiers** (Snapchat ID, Instagram ID, WhatsApp number) before generating the Student Well-being Index. **At least one** social identifier must be provided to unlock the Index.
+
+### Data Collected (client-only demo)
+- Previous GPA / Percentage (required)
+- Active Backlogs (optional)
+- Performance Notes (optional)
+- Study report (PDF/JPG) (optional)
+- Snapchat ID / Instagram ID / WhatsApp number (at least one required)
+
+### Processing & Behavior
+- The UI **gates access** to the Student Well-being Index until the user submits the Academic History and at least one social identifier.
+- Provided social identifiers are used as contextual signals (tokenized & anonymized in production) to improve sentiment baselines and mitigate uncertainty.
+- Charts (Behavioral Drift, Multi-Factor Analysis, Sentiment Timeline) are adjusted based on the supplied percentage and social signals.
+
+### Privacy & Safety Notes
+- In this demo, data is persisted in `localStorage` and processed client-side.
+- **Production requirement:** explicit consent, server-side tokenization/anonymization, RBAC, and audit logs before storing or using social identifiers.
+
+---
+
 ## 🚀 Performance Considerations
 
 ### Optimizations:

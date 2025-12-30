@@ -39,7 +39,10 @@ const WebcamFaceRecognition: React.FC<WebcamFaceRecognitionProps> = ({ onClose, 
   useEffect(() => {
     const loadModels = async () => {
       try {
-        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        // Use the official face-api.js CDN model URL
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/models/';
+        
+        console.log('Loading face-api models from:', MODEL_URL);
         
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
@@ -48,9 +51,11 @@ const WebcamFaceRecognition: React.FC<WebcamFaceRecognitionProps> = ({ onClose, 
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);
         
+        console.log('Face-api models loaded successfully');
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading face-api models:', error);
+        alert('Failed to load face recognition models. Please refresh the page and try again.');
         setIsLoading(false);
       }
     };
@@ -68,20 +73,39 @@ const WebcamFaceRecognition: React.FC<WebcamFaceRecognitionProps> = ({ onClose, 
   useEffect(() => {
     const startWebcam = async () => {
       try {
+        console.log('Requesting camera access...');
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 640 }, height: { ideal: 480 } }
+          video: { 
+            width: { ideal: 640 }, 
+            height: { ideal: 480 },
+            facingMode: 'user'
+          },
+          audio: false
         });
+
+        console.log('Camera access granted');
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
+            console.log('Video metadata loaded, starting face detection');
             videoRef.current?.play();
             startFaceDetection();
           };
         }
       } catch (error) {
         console.error('Error accessing webcam:', error);
-        alert('Unable to access webcam. Please check permissions.');
+        if (error instanceof DOMException) {
+          if (error.name === 'NotAllowedError') {
+            alert('Camera permission denied. Please allow camera access in your browser settings and refresh the page.');
+          } else if (error.name === 'NotFoundError') {
+            alert('No camera found. Please check that your camera is connected and not in use by another application.');
+          } else {
+            alert(`Camera error: ${error.message}`);
+          }
+        } else {
+          alert('Unable to access webcam. Please check permissions and refresh the page.');
+        }
       }
     };
 
@@ -122,6 +146,10 @@ const WebcamFaceRecognition: React.FC<WebcamFaceRecognitionProps> = ({ onClose, 
         const ctx = canvasRef.current.getContext('2d');
         if (ctx) {
           ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        }
+
+        if (resizedDetections.length === 0) {
+          setCurrentExpression('No face detected - Position your face in front of the camera');
         }
 
         // Draw detections
@@ -169,30 +197,52 @@ const WebcamFaceRecognition: React.FC<WebcamFaceRecognitionProps> = ({ onClose, 
   };
 
   // Analyze emotions with LLM
-  const handleAnalyzeWithLLM = async () => {
+  // Analyze emotions with LLM - Auto-trigger when sufficient data collected
+  useEffect(() => {
+    // Auto-analyze every 5 seconds if we have enough expression data
+    const autoAnalyzeInterval = setInterval(async () => {
+      if (expressions.length >= 10 && !isAnalyzing && emotionReport.length === 0) {
+        await performEmotionAnalysis();
+      }
+    }, 5000);
+
+    return () => clearInterval(autoAnalyzeInterval);
+  }, [expressions, isAnalyzing, emotionReport]);
+
+  const performEmotionAnalysis = async () => {
     if (expressions.length === 0) {
-      alert('No expressions detected yet. Please wait for the webcam to detect faces.');
       return;
     }
 
     setIsAnalyzing(true);
 
     try {
+      const dominantExpressionEntry = Object.entries(stats).reduce((a, b) => a[1] > b[1] ? a : b);
       const expressionSummary = {
         expressions: expressions,
         stats: stats,
-        dominantExpression: Object.entries(stats).reduce((a, b) => a[1] > b[1] ? a : b)[0],
+        dominantExpression: dominantExpressionEntry[0],
         notesContent: notesContent
       };
 
+      console.log('Auto-analyzing emotions with LLM:', expressionSummary);
       const report = await analyzeEmotionWithLLM(expressionSummary);
       setEmotionReport(report);
     } catch (error) {
       console.error('Error analyzing emotions:', error);
-      alert('Failed to analyze emotions. Please try again.');
+      // Don't show alert for auto-analysis, just log it
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleAnalyzeWithLLM = async () => {
+    if (expressions.length === 0) {
+      alert('No expressions detected yet. Please wait for the webcam to detect faces.');
+      return;
+    }
+
+    await performEmotionAnalysis();
   };
 
   // Download report
@@ -280,6 +330,45 @@ const WebcamFaceRecognition: React.FC<WebcamFaceRecognitionProps> = ({ onClose, 
 
             {/* Stats Panel */}
             <div className="space-y-4">
+              {/* Real-time Mood Status */}
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border-2 border-purple-200">
+                <h3 className="font-semibold text-slate-800 mb-3">Live Mood Analysis</h3>
+                <div className="space-y-3">
+                  {currentExpression && (
+                    <div className="p-3 bg-white rounded border-l-4 border-purple-500">
+                      <p className="text-sm font-semibold text-purple-700">Current Mood</p>
+                      <p className="text-lg font-bold text-slate-800">{currentExpression}</p>
+                    </div>
+                  )}
+                  
+                  {Object.entries(stats).length > 0 && (
+                    <div className="p-3 bg-white rounded border-l-4 border-pink-500">
+                      <p className="text-sm font-semibold text-pink-700">Dominant Emotion</p>
+                      <p className="text-lg font-bold text-slate-800">
+                        {Object.entries(stats).reduce((a, b) => a[1] > b[1] ? a : b)[0]?.toUpperCase()}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Detected: {expressions.length} frames
+                      </p>
+                    </div>
+                  )}
+                  
+                  {isAnalyzing && (
+                    <div className="p-3 bg-blue-50 rounded border-l-4 border-blue-500 flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+                      <p className="text-sm text-blue-700">Analyzing mood...</p>
+                    </div>
+                  )}
+                  
+                  {emotionReport && (
+                    <div className="p-3 bg-green-50 rounded border-l-4 border-green-500">
+                      <p className="text-sm font-semibold text-green-700">✓ Analysis Complete</p>
+                      <p className="text-xs text-slate-600 mt-1">Mood report generated</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <h3 className="font-semibold text-slate-800 mb-4">Expression Stats</h3>
                 <div className="space-y-2 text-sm">

@@ -21,7 +21,7 @@ import {
   Moon,
   Sun
 } from 'lucide-react';
-import { View, User } from './types';
+import { View, User, StudentAcademicHistory } from './types';
 import Dashboard from './component/Dashboard';
 import SkillGap from './component/SkillGap';
 import Projects from './component/Projects';
@@ -36,6 +36,7 @@ import ParentPortal from './component/ParentPortal';
 import Auth from './component/Auth';
 import TechAccelerator from './component/TechAccelerator';
 import Scholar from './component/Scholar';
+import EarlyWarning from './component/EarlyWarning';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -43,6 +44,13 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [blindMode, setBlindMode] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
+
+  // Prefill for Early Warning: Dashboard can supply a profile to pre-populate the form
+  const [initialEarlyWarningProfile, setInitialEarlyWarningProfile] = useState<StudentAcademicHistory | null>(null);
+  const navigateToEarlyWarningWithProfile = (profile?: StudentAcademicHistory | null) => {
+    setInitialEarlyWarningProfile(profile ?? null);
+    setCurrentView('early-warning');
+  };
 
   // Persistence Logic: Check for saved user on mount
   useEffect(() => {
@@ -229,10 +237,11 @@ const App: React.FC = () => {
         </header>
 
         <div className={`flex-1 overflow-auto p-4 lg:p-6 ${darkMode ? 'bg-slate-950' : 'bg-[#f8fafc]'}`}>
-          {currentView === 'dashboard' && <Dashboard onNavigate={setCurrentView} user={user} />}
-          {currentView === 'tech-accelerator' && <TechAccelerator onNavigate={setCurrentView} />}
+          {currentView === 'dashboard' && <Dashboard onNavigate={setCurrentView} user={user} onNavigateWithProfile={navigateToEarlyWarningWithProfile} />}
+          {currentView === 'tech-accelerator' && <TechAccelerator onNavigate={setCurrentView} onNavigateWithProfile={navigateToEarlyWarningWithProfile} />}
+          {currentView === 'early-warning' && <EarlyWarning onNavigate={setCurrentView} initialProfile={initialEarlyWarningProfile} clearInitialProfile={() => setInitialEarlyWarningProfile(null)} />}
           {currentView === 'scholar' && <Scholar />}
-          {currentView === 'skill-gap' && <SkillGap />}
+          {currentView === 'skill-gap' && <SkillGap /> }
           {currentView === 'mentor' && <Mentor />}
           {currentView === 'projects' && <Projects />}
           {currentView === 'interview' && <Interview />}
