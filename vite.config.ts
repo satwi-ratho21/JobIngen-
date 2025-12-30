@@ -7,7 +7,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // Allow access from network
     port: 3000,
-    open: true
+    strictPort: true,
+    open: true,
+    // Allow Render preview domains (and other onrender subdomains)
+    // Add specific hostnames or a wildcard-like entry for the onrender domain
+    allowedHosts: ['.onrender.com', 'localhost']
   }
 })
 
