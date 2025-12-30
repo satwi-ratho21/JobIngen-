@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "start": "vite preview --host --port $PORT",
-    "start:port": "vite preview --host --port 3000",
+    "start": "serve -s dist -l $PORT",
+    "start:port": "serve -s dist -l 3000",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "preview:host": "vite preview --host --port 5173",
@@ -26,6 +26,7 @@
     "react-dom": "^19.2.1",
     "react-markdown": "^10.1.0",
     "recharts": "^3.5.1",
+    "serve": "^14.2.0",
     "tesseract.js": "^5.1.1",
     "weaviate-ts-client": "^2.1.0"
   },
