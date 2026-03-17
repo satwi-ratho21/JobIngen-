@@ -1,0 +1,11 @@
+staticSites:
+  - name: ConnectED
+    repo: https://github.com/naga944/Visakha.hackathon.git
+    branch: feature/ews-tech-accel-projects-ui
+    rootDir: client
+    buildCommand: npm ci && npm run build
+    publishPath: dist
+    env:
+      - key: NODE_ENV
+        value: production
+    # Optional: webhooks or headers can be added here
