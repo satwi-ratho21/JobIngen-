@@ -1,0 +1,14 @@
+node_modules
+.git
+.env
+.env.local
+.env.*.local
+dist
+build
+client/output*.txt
+client/trace.txt
+*.log
+.DS_Store
+.vscode
+proj
+types/pdfjs-legacy.d.ts
