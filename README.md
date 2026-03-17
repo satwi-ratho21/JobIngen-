@@ -4,393 +4,128 @@
 [![Built with React](https://img.shields.io/badge/Built%20with-React%2019-61DAFB?logo=react)](https://react.dev)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)](https://nodejs.org)
 
-## 🚀 Overview
 
-**EduBridge** is an AI-powered career acceleration platform designed to help engineering students bridge the gap between their current skills and the requirements of top companies and research institutes.
+<img width="954" height="651" alt="image" src="https://github.com/user-attachments/assets/f42f856a-c665-4797-ba30-e3b47134a359" />
 
-The platform analyzes a candidate's resume, target company, and desired role to detect skill gaps, predict selection probability, and provide personalized preparation guidance. EduBridge helps students understand why resumes get rejected, what skills they are missing, and how to improve through structured learning resources and interview preparation.
+EduBridge is an AI-powered career acceleration platform designed to help engineering students bridge the gap between their current skills and the requirements of top companies and research institutes.
+The platform analyzes a candidate’s resume, target company, and desired role to detect skill gaps, predict selection probability, and provide personalized preparation guidance.
+EduBridge helps students understand why resumes get rejected, what skills they are missing, and how to improve through structured learning resources and interview preparation.
+<img width="2551" height="1612" alt="image" src="https://github.com/user-attachments/assets/defb0ae7-44c5-4cab-9eeb-36e9e1fc738e" />
 
-## ✨ Key Features
+Features:
 
-### 📊 **Dashboard**
-- Centralized hub displaying resume insights, preparation progress, and analytics
-- ATS match score with FAANG optimization
-- Market value assessment based on skill set
-- Real-time job matching with companies
-- Trending skills analysis
-- AI-powered resume optimization suggestions
-- Score growth tracking over time
-- Interactive charts and visualizations
+Dashboard: A centralized dashboard that displays resume insights, preparation progress, analytics, and recommended actions for career improvement.
+<img width="938" height="827" alt="image" src="https://github.com/user-attachments/assets/00817435-7c8b-4974-b0af-316837b4639f" />
 
-### 🚀 **Tech Accelerator**
-Students can select their dream company and role to receive:
-- Selection probability prediction
-- Missing skills required for the company
-- Personalized preparation roadmap
-- Previous interview questions from that company
-- Salary benchmarking and market insights
+Tech Accelerator: Allows students to select their dream company and role, upload their resume, and receive:
+Selection probability prediction
+Missing skills required for the company
+Personalized preparation roadmap
+Previous interview questions from that company
+<img width="1877" height="871" alt="image" src="https://github.com/user-attachments/assets/61f4f686-45bd-416a-85bc-6110331c1053" />
 
-### 🎓 **Scholar (IIT/NIT Internships)**
-- AI-based module evaluating resumes
-- Recommends internship opportunities from prestigious institutions
-- Estimated chances of shortlisting
-- Curated learning paths
+Scholar (IIT/NIT Internships):AI-based module that evaluates resumes and recommends internship opportunities from IITs and NITs along with estimated chances of shortlisting.
+<img width="862" height="822" alt="image" src="https://github.com/user-attachments/assets/fbb2bf0f-e993-4a36-918c-97d07a91eb83" />
 
-### 🔍 **Skill Gap Analyzer**
-- Analyzes resume and identifies missing technical and soft skills
-- Redirects users to relevant learning platforms
-- Provides structured improvement roadmap
-- Tracks skill development progress
+Skill Gap Analyzer: Analyzes the resume and identifies missing technical and soft skills, then redirects users to relevant learning platforms and resources.
+<img width="737" height="556" alt="image" src="https://github.com/user-attachments/assets/0aa43bd3-471c-413b-b2ad-c8839d3419c7" />
 
-### 💼 **ATS Resume (Recruiter Mode)**
-Tool designed for recruiters and company heads:
-- Analyze large numbers of resumes efficiently
-- Shortlist top candidates automatically
-- Detect duplicate resumes
-- Rank candidates using AI-powered keyword optimization
-- Bulk import and processing capabilities
+ATS Resume (Recruiter Mode): A tool designed for recruiters and company heads to:
+Analyze large numbers of resumes
+Shortlist top candidates
+Detect duplicate resumes
+Rank candidates using AI-powered keyword optimization
+<img width="828" height="640" alt="image" src="https://github.com/user-attachments/assets/80c97e70-7fe3-46d2-9d07-d16e942ff46e" />
 
-### 🎬 **Interview Practice & Simulation**
-- AI-powered mock interview generator
-- Face recognition for interview presence detection
-- Real-time feedback on communication skills
-- Question bank from top companies
+Tech Stack – EduBridge
 
-### 📈 **Early Warning System**
-- Identifies at-risk candidates based on engagement metrics
-- Predictive alerts for performance issues
-- Personalized intervention recommendations
+Frontend
+React 19 + Vite – Fast and modern UI development
+TypeScript – Type safety and scalable code
+Tailwind CSS – Responsive and utility-first styling
+Recharts – Data visualization for analytics dashboards
+Lucide React – Icon library for UI components
 
-## 🛠️ Tech Stack
+Backend
+Node.js + Express.js – REST API and server logic
+TypeScript – Structured backend development
+Multer – Resume file upload handling
+CORS & dotenv – Secure API communication and environment configuration
 
-### **Frontend**
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| React | 19.2.1 | Modern UI framework |
-| Vite | 7.3.0 | Lightning-fast build tool |
-| TypeScript | 5.2.2 | Type-safe development |
-| Tailwind CSS | 3.4.0 | Utility-first styling |
-| Recharts | 3.5.1 | Interactive data visualization |
-| Lucide React | 0.555.0 | Beautiful icon library |
-| React Markdown | 10.1.0 | Markdown rendering |
+AI & Machine Learning
+Google Generative AI (Gemini) – Resume analysis, skill gap detection, and interview preparation
+TensorFlow.js – Browser-based machine learning capabilities
+Face-api.js – Face detection for interview simulation features
+Tesseract.js – OCR for extracting text from documents or images
 
-### **Backend**
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| Node.js | 18+ | Server runtime |
-| Express.js | 4.18.2 | Web framework |
-| TypeScript | 5.3.3 | Type-safe backend |
-| Multer | 2.0.2 | File upload handling |
-| CORS | 2.8.5 | Cross-origin support |
-| dotenv | 16.3.1 | Environment configuration |
-| ts-node-dev | 2.0.0 | Development server |
+Data Processing & APIs
+Axios – API communication between frontend and backend
+Weaviate Vector Database – Semantic search and AI embeddings
+PDF.js & pdf-parse – Resume PDF parsing and text extraction
+React Markdown – Rendering AI-generated formatted responses
 
-### **AI & Machine Learning**
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| Google Generative AI | Latest | Resume analysis, skill detection, interview prep |
-| TensorFlow.js | 4.22.0 | Browser-based ML |
-| Face-api.js | 0.20.0 | Face detection for interviews |
-| Tesseract.js | 5.1.1 | OCR for document processing |
-| js-tiktoken | 1.0.11 | LLM token management |
+Utilities
+date-fns – Date manipulation
+js-tiktoken – Token management for LLM requests
 
-### **Data & APIs**
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| Axios | 1.7.2 | HTTP client |
-| Weaviate | 2.1.0 | Vector database for semantic search |
-| PDF.js | 5.4.449 | PDF processing |
-| pdf-parse | 1.1.1 | PDF text extraction |
-| date-fns | 3.0.0 | Date utilities |
+Development Tools
+ESLint + TypeScript ESLint – Code quality and linting
+ts-node-dev – Backend development server
 
-## 📁 Project Structure
+Serve – Static deployment support
 
-```
-EduBridge/
-├── client/                          # Frontend - React + Vite
-│   ├── src/
-│   │   ├── component/              # React UI components
-│   │   │   ├── AIEnhancedDashboard.tsx
-│   │   │   ├── AIReliefGame.tsx
-│   │   │   ├── ATSCandidateRanking.tsx
-│   │   │   ├── EarlyWarning.tsx
-│   │   │   ├── Interview.tsx
-│   │   │   ├── Mentor.tsx
-│   │   │   ├── Notes.tsx
-│   │   │   ├── ParentPortal.tsx
-│   │   │   ├── PDFViewer.tsx
-│   │   │   ├── PeerChat.tsx
-│   │   │   ├── PeerMatch.tsx
-│   │   │   ├── Projects.tsx
-│   │   │   ├── ReadingAnalysis.tsx
-│   │   │   ├── Scholar.tsx
-│   │   │   ├── SkillGap.tsx
-│   │   │   ├── StudyPlan.tsx
-│   │   │   ├── TechAccelerator.tsx
-│   │   │   ├── Timetable.tsx
-│   │   │   ├── Trends.tsx
-│   │   │   └── VirtualLab.tsx
-│   │   ├── services/               # API and AI services
-│   │   │   ├── aiAgentsServices.ts
-│   │   │   ├── geminiServices.ts
-│   │   │   ├── mlServices.ts
-│   │   │   ├── ragServices.ts
-│   │   │   └── earlyWarningService.ts
-│   │   ├── types/                  # TypeScript definitions
-│   │   ├── App.tsx
-│   │   ├── main.css
-│   │   ├── index.tsx
-│   │   └── types.ts
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
-│
-├── server/                          # Backend - Express + Node.js
-│   ├── src/
-│   │   ├── features/
-│   │   │   └── ai/
-│   │   │       ├── controller.ts   # API endpoints
-│   │   │       ├── routes.ts       # Route definitions
-│   │   │       └── service.ts      # Business logic
-│   │   ├── app.ts                 # Express app setup
-│   │   └── server.ts              # Server entry point
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── modules/                         # Shared modules
-│   ├── dashboard/
-│   │   └── Dashboard.tsx           # Main dashboard component
-│   └── auth/
-│       └── Auth.tsx                # Authentication module
-│
-├── db/                             # Database
-│   ├── migrations/
-│   ├── models/
-│   └── seeds/
-│
-└── README.md
-```
+Setup Instructions
+Prerequisites
 
-## 🚀 Getting Started
+Node.js v18 or higher
 
-### Prerequisites
-- **Node.js** v18 or higher
-- **npm** v8 or higher
-- **Git**
-- Google Gemini API Key (for AI features)
+npm or yarn package manager
 
-### Installation
-
-#### 1. Clone the Repository
-```bash
+Installation
+1. Clone the Repository
 git clone https://github.com/yourusername/edubridge.git
 cd edubridge
-```
-
-#### 2. Install Dependencies
-
-**Backend:**
-```bash
-cd server
+2. Install Dependencies
 npm install
-```
+3. Set Up Environment Variables
 
-**Frontend:**
-```bash
-cd ../client
-npm install
-```
+Create a .env file in the root directory and add:
 
-#### 3. Environment Configuration
-
-Create `server/.env`:
-```env
-GEMINI_API_KEY=your_google_gemini_api_key
-PORT=5000
-NODE_ENV=development
-```
-
-Create `client/.env.local` (optional, for local development):
-```env
-VITE_API_BASE_URL=http://localhost:5000
 VITE_API_KEY=your_google_gemini_api_key
-```
-
-#### 4. Start Development Server
-
-**Terminal 1 - Backend:**
-```bash
-cd server
+4. Start Development Server
 npm run dev
-# Runs on http://localhost:5000
-```
 
-**Terminal 2 - Frontend:**
-```bash
-cd client
-npm run dev
-# Runs on http://localhost:3000
-```
+The application will run at:
+http://localhost:3000
 
-The application will be accessible at `http://localhost:3000`
-
-## 🏗️ Build & Deployment
-
-### Build for Production
-
-**Backend:**
-```bash
-cd server
+Build for Production
 npm run build
-npm start
-```
 
-**Frontend:**
-```bash
-cd client
-npm run build
-# Generates optimized build in `dist/` folder
-```
+The optimized build will be generated inside the dist folder.
 
-### Preview Production Build
-```bash
+Preview Production Build
 npm run preview
-# Preview at http://localhost:4173
-```
+Project Structure
+EduBridge/
+│
+├── components/        # React UI components
+├── services/          # API and AI services
+├── backend/           # Express server and APIs
+├── utils/             # Helper utilities
+├── src/               # Styles and assets
+│
+├── App.tsx            # Main application component
+├── index.tsx          # Application entry point
+├── types.ts           # TypeScript type definitions
+├── package.json       # Project dependencies
+└── README.md
+Environment Variables
+Variable	Description
+VITE_API_KEY	Google Gemini API key used for AI features
+Development
 
-### Deployment Targets
+EduBridge uses Vite for fast development with Hot Module Replacement (HMR). Any changes in the source code will automatically update in the browser during development.
 
-**Backend:**
-- Render.com
-- Heroku
-- AWS EC2 / DigitalOcean
-- Railway.app
+License
 
-**Frontend:**
-- Vercel
-- Netlify
-- GitHub Pages
-- AWS S3 + CloudFront
-
-## 📦 Scripts
-
-### Frontend (Client)
-```bash
-npm run dev          # Start dev server with HMR
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
-```
-
-### Backend (Server)
-```bash
-npm run dev          # Start with ts-node-dev
-npm run build        # Compile TypeScript
-npm start            # Run compiled server
-```
-
-## 🔑 Environment Variables
-
-| Variable | Description | Required | Example |
-|----------|-------------|----------|---------|
-| `GEMINI_API_KEY` | Google Gemini API key | ✅ | `sk-...` |
-| `VITE_API_BASE_URL` | Backend API URL | ❌ | `http://localhost:5000` |
-| `PORT` | Server port | ❌ | `5000` |
-| `NODE_ENV` | Environment | ❌ | `development` |
-
-## 💡 Key Features Explained
-
-### Dashboard
-Real-time insights with:
-- ATS match score with company-specific optimization
-- Market value assessment
-- Job recommendations
-- Trending skills analysis
-- Interactive performance charts
-
-### Resume Analysis
-AI-powered analysis detects:
-- Keyword optimization opportunities
-- Format and structure improvements
-- Content enhancement suggestions
-- ATS compatibility issues
-
-### Skill Gap Detection
-- Identifies missing technical skills
-- Recommends learning resources
-- Tracks improvement progress
-- Suggests relevant projects
-
-### Interview Preparation
-- AI-generated mock questions
-- Real-time feedback
-- Performance analytics
-- Company-specific preparation
-
-## 🔄 Hot Module Replacement (HMR)
-
-During development, Vite automatically refreshes your browser when you make changes to the source code. No manual refresh needed!
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Port already in use:**
-```bash
-# Backend (change PORT in .env)
-# Frontend (Vite will use next available port automatically)
-```
-
-**Dependencies not installing:**
-```bash
-# Clear npm cache
-npm cache clean --force
-npm install
-```
-
-**Environment variables not loading:**
-```bash
-# Restart dev server after adding .env changes
-```
-
-## 📚 API Documentation
-
-API endpoints are available at `/api/*` prefix:
-- `POST /api/ai/analyze-resume` - Analyze resume
-- `POST /api/ai/detect-skills` - Detect skill gaps
-- `POST /api/ai/predict-selection` - Predict selection probability
-- `GET /api/ai/interview-questions` - Get interview questions
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Authors
-
-- **EduBridge Team** - AI Career Acceleration Platform
-
-## 🙏 Acknowledgments
-
-- Google Generative AI for LLM capabilities
-- React and Vite communities
-- Open source contributors
-
-## 📞 Support
-
-For issues, questions, or suggestions:
-- Open an issue on GitHub
-- Contact: support@edubridge.com
-- Documentation: [docs.edubridge.com](https://docs.edubridge.com)
-
----
-
-**Made with ❤️ to help engineering students succeed**
+MIT License
