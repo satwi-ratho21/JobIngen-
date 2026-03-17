@@ -4,7 +4,7 @@
 [![Built with React](https://img.shields.io/badge/Built%20with-React%2019-61DAFB?logo=react)](https://react.dev)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)](https://nodejs.org)
 
-EduBridge: Multi-Agent AI Platform for Resume Analysis and Skill Gap Detection
+
 <img width="954" height="651" alt="image" src="https://github.com/user-attachments/assets/f42f856a-c665-4797-ba30-e3b47134a359" />
 
 EduBridge is an AI-powered career acceleration platform designed to help engineering students bridge the gap between their current skills and the requirements of top companies and research institutes.
